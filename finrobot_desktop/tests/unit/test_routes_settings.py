@@ -288,7 +288,7 @@ async def test_get_settings_exposes_provider_registry(tmp_path: Path) -> None:
     assert resp.status_code == 200, resp.text
     body = resp.json()
     providers = {p["id"]: p for p in body["providers"]}
-    assert set(providers) == {"anthropic", "openai"}
+    assert set(providers) == {"claude-code", "anthropic", "openai"}
     assert providers["openai"]["is_builtin"] is True
     # openai is the active model and its key is injected → key_set True.
     assert providers["openai"]["key_set"] is True

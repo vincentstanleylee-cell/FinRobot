@@ -487,7 +487,7 @@ async def test_provider_route(body: TestProviderRequest, request: Request) -> Te
     cfg = settings.provider_by_id(body.provider_id)
     if cfg is None:
         raise HTTPException(status_code=404, detail=f"Unknown provider '{body.provider_id}'.")
-    if cfg.kind != "test" and not settings.provider_key(body.provider_id):
+    if cfg.kind not in ("test", "claude-code") and not settings.provider_key(body.provider_id):
         return TestProviderResponse(ok=False, code="no_key")
     model_id = (body.model_id or "").strip()
     if not model_id:
@@ -735,9 +735,16 @@ async def _build_response(request: Request) -> SettingsResponse:
     # its key is stored and whether it's a (non-deletable) built-in.
     provider_infos: list[ProviderInfo] = []
     for provider in settings.providers:
-        key_set = await secret_store.has(_provider_key_name(provider.id)) or bool(
-            settings.provider_key(provider.id)
-        )
+        if provider.kind == "claude-code":
+            # No stored key: "configured" means the `claude` CLI is installed
+            # (its own subscription login is checked by "Test connection").
+            from finrobot.claude_code_model import claude_code_available
+
+            key_set = claude_code_available()
+        else:
+            key_set = await secret_store.has(_provider_key_name(provider.id)) or bool(
+                settings.provider_key(provider.id)
+            )
         provider_infos.append(
             ProviderInfo(
                 id=provider.id,

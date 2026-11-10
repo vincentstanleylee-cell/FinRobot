@@ -93,6 +93,8 @@ export function AiModelPanel({
     is_builtin: p.is_builtin,
   }))
   const llmKeyConfigured = currentProviderInfo?.key_set ?? false
+  // Claude subscription (Claude Code CLI): no API key at all — the CLI holds the login.
+  const isClaudeCode = currentProviderInfo?.kind === 'claude-code'
 
   // Live connection probe (tiny "ping" LLM call). Takes explicit ids so the
   // auto-test fired from a save callback uses the values at edit time, not a
@@ -119,7 +121,14 @@ export function AiModelPanel({
     // locked to this model" and, worse, instantly made model_name non-empty so a
     // red "no key" error fired before the user could type anything. Blank field
     // + the suggestions datalist lets them consciously pick from the dropdown.
-    const nextModel = p && currentModelId && p.models.includes(currentModelId) ? currentModelId : ''
+    // Exception: the Claude-subscription provider needs no key, so pre-fill its
+    // first alias (sonnet) — there is no later step that would complete the setup.
+    const nextModel =
+      p && currentModelId && p.models.includes(currentModelId)
+        ? currentModelId
+        : p?.kind === 'claude-code'
+          ? (p.models[0] ?? '')
+          : ''
     const next = `${providerId}:${nextModel}`
     setModelName(next)
     setLlmApiKey('')
@@ -389,41 +398,58 @@ export function AiModelPanel({
               </div>
             )}
 
-            {/* API key for the selected provider */}
+            {/* API key for the selected provider (none for the Claude subscription) */}
             <div className="settings-field">
-              <label className="settings-field-label">
-                <span className="label-text">
-                  {t('settings.llm.apiKeyLabelFor', {
-                    provider: currentProviderInfo?.label ?? currentProviderId,
-                  })}
-                </span>
-                {llmKeyConfigured ? (
-                  <span className="settings-badge is-ok">{t('settings.badge.configured')}</span>
-                ) : (
-                  <span className="settings-badge is-required">{t('settings.badge.required')}</span>
-                )}
-                {llmKeyConfigured && (
-                  <button
-                    type="button"
-                    className="settings-clear-btn"
-                    onClick={() => onClearSecret(`provider_key:${currentProviderId}`)}
-                  >
-                    {t('settings.clearKey.button')}
-                  </button>
-                )}
-              </label>
-              <SecretInput
-                value={llmApiKey}
-                onChange={handleLlmKeyChange}
-                disabled={!providerSelected}
-                placeholder={
-                  llmKeyConfigured
-                    ? '••••••••'
-                    : t('settings.llm.apiKeyPlaceholder', {
+              {isClaudeCode ? (
+                <div className="settings-onboard">
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" />
+                    <path d="M5 8.2l2 2 4-4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div>
+                    <p className="settings-onboard-title">{t('settings.claudeCode.title')}</p>
+                    <p className="settings-onboard-body">{t('settings.claudeCode.body')}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <label className="settings-field-label">
+                    <span className="label-text">
+                      {t('settings.llm.apiKeyLabelFor', {
                         provider: currentProviderInfo?.label ?? currentProviderId,
-                      })
-                }
-              />
+                      })}
+                    </span>
+                    {llmKeyConfigured ? (
+                      <span className="settings-badge is-ok">{t('settings.badge.configured')}</span>
+                    ) : (
+                      <span className="settings-badge is-required">
+                        {t('settings.badge.required')}
+                      </span>
+                    )}
+                    {llmKeyConfigured && (
+                      <button
+                        type="button"
+                        className="settings-clear-btn"
+                        onClick={() => onClearSecret(`provider_key:${currentProviderId}`)}
+                      >
+                        {t('settings.clearKey.button')}
+                      </button>
+                    )}
+                  </label>
+                  <SecretInput
+                    value={llmApiKey}
+                    onChange={handleLlmKeyChange}
+                    disabled={!providerSelected}
+                    placeholder={
+                      llmKeyConfigured
+                        ? '••••••••'
+                        : t('settings.llm.apiKeyPlaceholder', {
+                            provider: currentProviderInfo?.label ?? currentProviderId,
+                          })
+                    }
+                  />
+                </>
+              )}
               <div className="settings-test-row">
                 <button
                   type="button"

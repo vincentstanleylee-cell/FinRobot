@@ -79,7 +79,7 @@ def _shared_llm_http_client() -> httpx.AsyncClient:
     return _llm_http_client
 
 
-ProviderKind = Literal["openai-compatible", "anthropic", "test"]
+ProviderKind = Literal["openai-compatible", "anthropic", "claude-code", "test"]
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
@@ -122,6 +122,14 @@ class ProviderConfig(BaseModel):
 # is free text, so the user can run any model the provider exposes (we can't keep
 # a complete, current list of every model id, and don't pretend to).
 BUILTIN_PROVIDERS: tuple[ProviderConfig, ...] = (
+    # Claude *subscription* (Pro/Max) via the user's own signed-in `claude` CLI —
+    # no API key, no API billing. See finrobot/claude_code_model.py.
+    ProviderConfig(
+        id="claude-code",
+        label="Claude subscription (Claude Code)",
+        kind="claude-code",
+        models=["sonnet", "opus", "haiku"],
+    ),
     ProviderConfig(
         id="anthropic",
         label="Anthropic",
@@ -423,6 +431,16 @@ class FinRobotSettings(BaseSettings):
             )
         if cfg.kind == "test":
             return  # a provider explicitly declared as a test stub
+        if cfg.kind == "claude-code":
+            # Subscription login lives in the `claude` CLI, not in a key we hold.
+            from finrobot.claude_code_model import claude_code_available
+
+            if not claude_code_available():
+                raise ValueError(
+                    "Claude Code CLI not found. Install Claude Code and sign in with "
+                    "your Claude subscription (run `claude` once in a terminal)."
+                )
+            return
         if not self.provider_key(provider_id):
             raise ValueError(
                 f"No API key configured for provider '{provider_id}' "
@@ -455,6 +473,10 @@ class FinRobotSettings(BaseSettings):
             return False
         if cfg.kind == "test":
             return True
+        if cfg.kind == "claude-code":
+            from finrobot.claude_code_model import claude_code_available
+
+            return claude_code_available()
         return bool(self.provider_key(provider_id))
 
     def runtime_config_error(self) -> str | None:
@@ -525,6 +547,12 @@ class FinRobotSettings(BaseSettings):
                 f"Configured providers: {', '.join(p.id for p in self.providers)}. "
                 f"Format: provider:model_id (e.g. anthropic:claude-sonnet-4-6)"
             )
+        if cfg.kind == "claude-code":
+            # Claude subscription through the user's own signed-in `claude` CLI:
+            # no API key and no HTTP client — the CLI authenticates itself.
+            from finrobot.claude_code_model import build_claude_code_model
+
+            return build_claude_code_model(model_id)
         api_key = self.provider_key(provider_id)
 
         # One shared, warm-pooled httpx client for every provider (see

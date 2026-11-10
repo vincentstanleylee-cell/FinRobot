@@ -29,8 +29,9 @@ class TestDefaults:
     def test_default_providers_are_the_builtins(self):
         s = FinRobotSettings()
         ids = [p.id for p in s.providers]
-        # Only the two majors are built in; everything else is a custom provider.
-        assert ids == ["anthropic", "openai"]
+        # The two API-key majors plus the key-less Claude-subscription provider are
+        # built in; everything else is a custom provider.
+        assert ids == ["claude-code", "anthropic", "openai"]
         openai = s.provider_by_id("openai")
         assert openai is not None and openai.kind == "openai-compatible"
 

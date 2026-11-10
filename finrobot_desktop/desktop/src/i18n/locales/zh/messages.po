@@ -2741,6 +2741,14 @@ msgid "settings.llm.apiKeyPlaceholder"
 msgstr "填入 {provider} 的 API 密钥"
 
 #. js-lingui-explicit-id
+msgid "settings.claudeCode.title"
+msgstr "使用你的 Claude 订阅——无需 API 密钥"
+
+#. js-lingui-explicit-id
+msgid "settings.claudeCode.body"
+msgstr "AI 研究通过本机的 Claude Code 运行，使用你在那里登录的 Claude 账号（Pro/Max）。用量计入订阅额度，不产生 API 费用。若“测试连接”失败，请打开终端运行一次 `claude` 并登录。"
+
+#. js-lingui-explicit-id
 msgid "settings.onboarding.title"
 msgstr "先配置一个 AI 模型密钥"
 

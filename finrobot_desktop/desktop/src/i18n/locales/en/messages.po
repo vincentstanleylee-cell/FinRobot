@@ -2741,6 +2741,14 @@ msgid "settings.llm.apiKeyPlaceholder"
 msgstr "Enter your {provider} API key"
 
 #. js-lingui-explicit-id
+msgid "settings.claudeCode.title"
+msgstr "Uses your Claude subscription — no API key needed"
+
+#. js-lingui-explicit-id
+msgid "settings.claudeCode.body"
+msgstr "AI research runs through the Claude Code app on this computer, using the Claude account you are signed in with there (Pro/Max). Usage counts toward your subscription limits, not an API bill. If \"Test connection\" fails, open a terminal, run `claude` once and sign in."
+
+#. js-lingui-explicit-id
 msgid "settings.onboarding.title"
 msgstr "Add an AI model key to begin"
 

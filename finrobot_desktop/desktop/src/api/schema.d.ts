@@ -3105,7 +3105,7 @@ export interface components {
        * Kind
        * @enum {string}
        */
-      kind: 'openai-compatible' | 'anthropic' | 'test'
+      kind: 'openai-compatible' | 'anthropic' | 'claude-code' | 'test'
       /** Base Url */
       base_url?: string | null
       /** Models */
